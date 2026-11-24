@@ -514,6 +514,24 @@
   .grid>.panel>.growbox,.lower>.panel>.growbox{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
   .growbox>.input{flex:1 1 auto;min-height:90px}
 </style>
+<style>
+  /* 模式切换挪到页头右上角 */
+  .hero .modebar{margin:0;padding:0;flex:0 0 auto;flex-wrap:nowrap}
+  .hero{gap:14px}
+  .hero .brand{flex:1 1 auto;min-width:0}
+  .hero .keybox{flex:0 1 320px;min-width:200px}
+  @media (max-width:760px){
+    .hero .modebar{order:3;width:100%;margin-top:6px}
+    .hero .keybox{flex:1 1 220px}
+  }
+</style>
+<style>
+  /* 语言池色点恢复按语种上色（覆盖黑白/橙点） */
+  .chip .d,.chip.on .d{background:hsl(var(--h) 88% 62%)!important;box-shadow:none!important}
+  .chip.off .d{background:#3a3a3a!important}
+  .hero .modebar{padding-left:4px}
+  .hero .keybox{flex:0 1 300px}
+</style>
 </head>
 <body>
 <div class="blobs"></div>
@@ -540,13 +558,13 @@
         <button id="dice" class="iconbtn" title="换一个密钥">⟳</button>
       </div>
     </div>
+    <div class="modebar">
+      <span class="seg" id="modeseg">
+        <button class="btn ghost seg-b" data-m="w" type="button">逐词密文</button>
+        <button class="btn ghost seg-b act" data-m="g" type="button">乱码编译</button>
+      </span>
+    </div>
   </header>
-  <div class="modebar">
-    <span class="seg" id="modeseg">
-      <button class="btn ghost seg-b act" data-m="w" type="button">逐词密文</button>
-      <button class="btn ghost seg-b" data-m="g" type="button">乱码编译</button>
-    </span>
-  </div>
 
 
   <div id="modeWords">
@@ -597,7 +615,7 @@
         </span>
       </div>
       <div class="row" style="gap:10px">
-        <button id="colortog" class="btn ghost sm">着色：关</button>
+        <button id="colortog" class="btn ghost sm">着色：开</button>
         <button id="gap" class="btn ghost sm">词间空格：开</button>
         <button id="esctog" class="btn ghost sm">未收录字：原样</button>
       </div>
@@ -8042,7 +8060,7 @@ function boot(){
   const colorBtn = el("colortog"), gapBtn = el("gap");
   const zhwSeg = el("zhwseg"), escBtn = el("esctog");
 
-  const state = { langs: ORDER.slice(), mix: .85, rate: 1, color: false, gap: true, zhw: 0, esc: false };
+  const state = { langs: ORDER.slice(), mix: .85, rate: 1, color: true, gap: true, zhw: 0, esc: false };
   let toastTimer = null;
   let lastUnknown = [];
 
@@ -8438,7 +8456,7 @@ function boot(){
     });
   }
   [...el("modeseg").querySelectorAll("button")].forEach(b => b.addEventListener("click", () => setMode(b.dataset.m)));
-  setMode("w");
+  setMode("g");
 
   /* ---------------- 本地存档：关掉浏览器也不丢 ---------------- */
   const LS_KEY = "ba.local.v1";
