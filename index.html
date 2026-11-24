@@ -8440,14 +8440,85 @@ function boot(){
   [...el("modeseg").querySelectorAll("button")].forEach(b => b.addEventListener("click", () => setMode(b.dataset.m)));
   setMode("w");
 
+  /* ---------------- 本地存档：关掉浏览器也不丢 ---------------- */
+  const LS_KEY = "ba.local.v1";
+  let saveT = 0;
+
+  function collect(){
+    return {
+      v: 1, t: Date.now(),
+      key: keyEl.value,
+      mode: window.__mode || "w",
+      input: inputEl.value,
+      cipher: cipherEl.value,
+      gin: el("gin").value,
+      gdec: el("gdec").value,
+      langs: state.langs.slice(),
+      mix: state.mix, rate: state.rate,
+      color: state.color, gap: state.gap, esc: state.esc, zhw: state.zhw,
+      gibWrap: gibWrap, gibColor: gibColor
+    };
+  }
+  function saveNow(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(collect())); }catch(e){}
+  }
+  function saveSoon(){ clearTimeout(saveT); saveT = setTimeout(saveNow, 500); }
+  function applySaved(o){
+    if (!o || typeof o !== "object") return false;
+    try{
+      if (typeof o.key === "string" && o.key) keyEl.value = o.key;
+      if (Array.isArray(o.langs) && o.langs.length){
+        const keep = o.langs.filter(k => ORDER.indexOf(k) >= 0);
+        if (keep.length) state.langs = keep;
+      }
+      if (typeof o.mix === "number") state.mix = o.mix;
+      if (typeof o.rate === "number") state.rate = o.rate;
+      if (typeof o.color === "boolean") state.color = o.color;
+      if (typeof o.gap === "boolean") state.gap = o.gap;
+      if (typeof o.esc === "boolean") state.esc = o.esc;
+      state.zhw = o.zhw ? 1 : 0;
+      if (typeof o.gibWrap === "boolean"){
+        gibWrap = o.gibWrap;
+        el("gwrap").textContent = "每 5 字符断行：" + (gibWrap ? "开" : "关");
+      }
+      if (typeof o.gibColor === "boolean"){
+        gibColor = o.gibColor;
+        el("gcolor").textContent = "分色：" + (gibColor ? "开" : "关");
+      }
+      mixEl.value = Math.round(state.mix * 100); syncRange(mixEl, mixvEl);
+      rateEl.value = Math.round(state.rate * 100); syncRange(rateEl, ratevEl);
+      if (zhwSeg) [...zhwSeg.querySelectorAll("button")].forEach(x => x.classList.toggle("act", +x.dataset.z === state.zhw));
+      syncChips();
+      outEl.classList.toggle("nocolor", !state.color);
+      if (typeof o.input === "string") inputEl.value = o.input;
+      if (typeof o.cipher === "string") cipherEl.value = o.cipher;
+      if (typeof o.gin === "string") el("gin").value = o.gin;
+      if (typeof o.gdec === "string") el("gdec").value = o.gdec;
+      return true;
+    }catch(e){ return false; }
+  }
+
   /* 初始 */
-  syncChips();
-  syncRange(mixEl, mixvEl);
-  syncRange(rateEl, ratevEl);
   dictStats();
   renderUnknown();
-  inputEl.value = SAMPLE;
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); }catch(e){ saved = null; }
+  const hadSaved = applySaved(saved);
+  if (!hadSaved || !inputEl.value.trim()) inputEl.value = SAMPLE;
   render();
+  if (hadSaved){
+    if (el("gin").value.trim()) gibRender();
+    gCountUpdate();
+    setMode(saved.mode === "g" ? "g" : "w");
+  }
+
+  /* 改动即存；页面隐藏 / 关闭时再补存一次 */
+  document.addEventListener("input", saveSoon, true);
+  document.addEventListener("change", saveSoon, true);
+  document.addEventListener("click", saveSoon, true);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) saveNow(); });
+  window.addEventListener("pagehide", saveNow);
+  window.addEventListener("beforeunload", saveNow);
 }
 
 /* ============================================================
