@@ -8464,7 +8464,7 @@ function boot(){
 
   function collect(){
     return {
-      v: 1, t: Date.now(),
+      v: 2, t: Date.now(),
       key: keyEl.value,
       mode: window.__mode || "w",
       input: inputEl.value,
@@ -8491,7 +8491,8 @@ function boot(){
       }
       if (typeof o.mix === "number") state.mix = o.mix;
       if (typeof o.rate === "number") state.rate = o.rate;
-      if (typeof o.color === "boolean") state.color = o.color;
+      if (o.v >= 2 && typeof o.color === "boolean") state.color = o.color;
+      else state.color = true;   /* 旧存档没记过着色，按新版默认开 */
       if (typeof o.gap === "boolean") state.gap = o.gap;
       if (typeof o.esc === "boolean") state.esc = o.esc;
       state.zhw = o.zhw ? 1 : 0;
